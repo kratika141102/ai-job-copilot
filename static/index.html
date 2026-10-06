@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Job Copilot</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        header {
+            background: #1f2937;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin-top: 8px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .score {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .skill {
+            display: inline-block;
+            background: #e5e7eb;
+            padding: 7px 12px;
+            margin: 5px;
+            border-radius: 20px;
+        }
+
+        .missing {
+            background: #fee2e2;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        #result {
+            display: none;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>🤖 AI Job Copilot</h1>
+
+    <p>
+        AI-powered Resume & Interview Assistant
+    </p>
+
+</header>
+
+
+<div class="container">
+
+
+    <!-- ============================= -->
+    <!-- RESUME ANALYZER -->
+    <!-- ============================= -->
+
+    <div class="card">
+
+        <h2>📄 Analyze Your Resume</h2>
+
+        <label>
+            Upload Resume
+        </label>
+
+        <input
+            type="file"
+            id="resumeFile"
+            accept=".pdf"
+        >
+
+
+        <label>
+            Job Description
+        </label>
+
+        <textarea
+            id="jobDescription"
+            placeholder="Paste the job description here..."
+        ></textarea>
+
+
+        <button onclick="analyzeResume()">
+
+            Analyze Resume
+
+        </button>
+
+
+        <div id="loading">
+
+            🤖 AI is analyzing your resume...
+
+        </div>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- RESULT -->
+    <!-- ============================= -->
+
+    <div
+        class="card"
+        id="result"
+    >
+
+        <h2>📊 Resume Analysis</h2>
+
+
+        <div>
+
+            <strong>Match Score</strong>
+
+            <div
+                class="score"
+                id="matchScore"
+            >
+                0%
+            </div>
+
+        </div>
+
+
+        <h3>✅ Matched Skills</h3>
+
+        <div id="matchedSkills"></div>
+
+
+        <h3>❌ Missing Skills</h3>
+
+        <div id="missingSkills"></div>
+
+
+        <h3>💡 Recommendations</h3>
+
+        <div id="recommendations"></div>
+
+
+        <h3>📝 Resume Suggestions</h3>
+
+        <div id="resumeSuggestions"></div>
+
+
+        <h3>🤖 AI Analysis</h3>
+
+        <pre id="aiAnalysis"></pre>
+
+
+        <h3>🎯 Interview Questions</h3>
+
+        <pre id="interviewQuestions"></pre>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+async function analyzeResume() {
+
+
+    const fileInput =
+        document.getElementById("resumeFile");
+
+
+    const jobDescription =
+        document.getElementById("jobDescription").value;
+
+
+    if (!fileInput.files.length) {
+
+        alert("Please upload your resume PDF.");
+
+        return;
+    }
+
+
+    if (!jobDescription.trim()) {
+
+        alert("Please enter the job description.");
+
+        return;
+    }
+
+
+    const formData = new FormData();
+
+
+    formData.append(
+        "file",
+        fileInput.files[0]
+    );
+
+
+    formData.append(
+        "job_description",
+        jobDescription
+    );
+
+
+    document.getElementById("loading").style.display =
+        "block";
+
+
+    document.getElementById("result").style.display =
+        "none";
+
+
+    try {
+
+
+        const response = await fetch(
+            "/analyze-resume",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail || "Something went wrong."
+            );
+
+        }
+
+
+        // Match score
+
+        document.getElementById("matchScore")
+            .innerText =
+            data.match_score + "%";
+
+
+        // Matched skills
+
+        const matchedContainer =
+            document.getElementById("matchedSkills");
+
+        matchedContainer.innerHTML = "";
+
+
+        data.matched_skills.forEach(skill => {
+
+            const span =
+                document.createElement("span");
+
+            span.className = "skill";
+
+            span.innerText = skill;
+
+            matchedContainer.appendChild(span);
+
+        });
+
+
+        // Missing skills
+
+        const missingContainer =
+            document.getElementById("missingSkills");
+
+        missingContainer.innerHTML = "";
+
+
+        data.missing_skills.forEach(skill => {
+
+            const span =
+                document.createElement("span");
+
+            span.className =
+                "skill missing";
+
+            span.innerText = skill;
+
+            missingContainer.appendChild(span);
+
+        });
+
+
+        // Recommendations
+
+        document.getElementById("recommendations")
+            .innerHTML =
+            data.recommendations
+                .map(item =>
+                    `<p><strong>${item.skill}:</strong> ${item.recommendation}</p>`
+                )
+                .join("");
+
+
+        // Resume suggestions
+
+        document.getElementById("resumeSuggestions")
+            .innerHTML =
+            data.resume_suggestions
+                .map(item =>
+                    `<p>• ${item}</p>`
+                )
+                .join("");
+
+
+        // AI analysis
+
+        document.getElementById("aiAnalysis")
+            .innerText =
+            data.ai_analysis;
+
+
+        // Interview questions
+
+        document.getElementById("interviewQuestions")
+            .innerText =
+            data.interview_questions;
+
+
+        document.getElementById("result")
+            .style.display =
+            "block";
+
+
+    } catch (error) {
+
+
+        alert(
+            "Error: " + error.message
+        );
+
+    }
+
+
+    document.getElementById("loading")
+        .style.display =
+        "none";
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
